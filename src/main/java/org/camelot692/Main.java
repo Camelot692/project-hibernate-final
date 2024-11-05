@@ -6,6 +6,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisStringCommands;
+import org.camelot692.config.DatabaseConfig;
 import org.camelot692.dao.*;
 import org.camelot692.domain.*;
 import org.camelot692.redis.CityCountry;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 import static java.util.Objects.nonNull;
 
 public class Main {
+
     private final SessionFactory sessionFactory;
     private final RedisClient redisClient;
 
@@ -33,7 +35,8 @@ public class Main {
     private final CountryDAO countryDAO;
 
     public Main() {
-        sessionFactory = prepareRelationalDb();
+        DatabaseConfig dbConfig = new DatabaseConfig();
+        sessionFactory = dbConfig.prepareRelationalDb();
         cityDAO = new CityDAO(sessionFactory);
         countryDAO = new CountryDAO(sessionFactory);
 
@@ -68,27 +71,6 @@ public class Main {
 
         main.shutdown();
 
-    }
-
-    private SessionFactory prepareRelationalDb() {
-        final SessionFactory sessionFactory;
-        Properties properties = new Properties();
-        properties.put(Environment.DIALECT, "org.hibernate.dialect.MySQL8Dialect");
-        properties.put(Environment.DRIVER, "com.p6spy.engine.spy.P6SpyDriver");
-        properties.put(Environment.URL, "jdbc:p6spy:mysql://localhost:3306/world");
-        properties.put(Environment.USER, "root");
-        properties.put(Environment.PASS, "root");
-        properties.put(Environment.CURRENT_SESSION_CONTEXT_CLASS, "thread");
-        properties.put(Environment.HBM2DDL_AUTO, "validate");
-        properties.put(Environment.STATEMENT_BATCH_SIZE, "100");
-
-        sessionFactory = new Configuration()
-                .addAnnotatedClass(City.class)
-                .addAnnotatedClass(Country.class)
-                .addAnnotatedClass(CountryLanguage.class)
-                .addProperties(properties)
-                .buildSessionFactory();
-        return sessionFactory;
     }
 
     private RedisClient prepareRedisClient() {
